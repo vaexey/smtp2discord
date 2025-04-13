@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/mail"
 	"strings"
@@ -68,7 +68,7 @@ func main() {
 			jsonData.Addresses.ResentBcc = transformStdAddressToEmailAddress(msg.ResentBcc)
 
 			for _, a := range msg.Attachments {
-				data, _ := ioutil.ReadAll(a.Data)
+				data, _ := io.ReadAll(a.Data)
 				jsonData.Attachments = append(jsonData.Attachments, &EmailAttachment{
 					Filename:    a.Filename,
 					ContentType: a.ContentType,
@@ -77,7 +77,7 @@ func main() {
 			}
 
 			for _, a := range msg.EmbeddedFiles {
-				data, _ := ioutil.ReadAll(a.Data)
+				data, _ := io.ReadAll(a.Data)
 				jsonData.EmbeddedFiles = append(jsonData.EmbeddedFiles, &EmailEmbeddedFile{
 					CID:         a.CID,
 					ContentType: a.ContentType,
@@ -85,11 +85,31 @@ func main() {
 				})
 			}
 
-			resp, err := resty.New().R().SetHeader("Content-Type", "application/json").SetBody(jsonData).Post(*flagWebhook)
+			// content, err := json.Marshal(jsonData)
+			content := ""
+			timestamp, err := time.Parse("2006-01-02 15:04:05 -0700 -0700", jsonData.Date)
+
+			mainEmbed := DiscordEmbed{
+				Title:       jsonData.Subject,
+				Description: jsonData.Body.Text,
+				Footer: DiscordFooter{
+					Text: "",
+				},
+				Color:     8061094,
+				Timestamp: timestamp.Format(time.RFC3339),
+			}
+
+			packet := DiscordMessage{
+				Content:  string(content),
+				Embeds:   []DiscordEmbed{mainEmbed},
+				Username: jsonData.Addresses.From.Address,
+			}
+
+			resp, err := resty.New().R().SetHeader("Content-Type", "application/json").SetBody(packet).Post(*flagWebhook)
 			if err != nil {
 				log.Println(err)
 				return errors.New("E1: Cannot accept your message due to internal error, please report that to our engineers")
-			} else if resp.StatusCode() != 200 {
+			} else if resp.StatusCode() != 204 {
 				log.Println(resp.Status())
 				return errors.New("E2: Cannot accept your message due to internal error, please report that to our engineers")
 			}

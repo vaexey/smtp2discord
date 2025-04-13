@@ -54,3 +54,21 @@ type EmailMessage struct {
 	Attachments   []*EmailAttachment   `json:"attachments,omitempty"`
 	EmbeddedFiles []*EmailEmbeddedFile `json:"embedded_files,omitempty"`
 }
+
+type DiscordMessage struct {
+	Username string         `json:"username"`
+	Content  string         `json:"content"`
+	Embeds   []DiscordEmbed `json:"embeds"`
+}
+
+type DiscordEmbed struct {
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Color       int           `json:"color"`
+	Footer      DiscordFooter `json:"footer"`
+	Timestamp   string        `json:"timestamp"`
+}
+
+type DiscordFooter struct {
+	Text string `json:"text"`
+}

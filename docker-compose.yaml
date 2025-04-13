@@ -1,0 +1,8 @@
+services:
+  smtp2http:
+    container_name: smtp2http
+    build: .
+    ports:
+      - 25:25
+    environment:
+      - WEBHOOK_URL=$WEBHOOK_URL
